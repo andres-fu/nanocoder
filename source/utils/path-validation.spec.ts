@@ -300,6 +300,29 @@ test.serial('resolveFilePath: containmentRoot lets a deep session cwd still reac
 	}
 });
 
+// Windows paths are case-insensitive: every spelling of a folder is one folder.
+test('isPathInside: ignores letter case on Windows only', (t) => {
+	const root = join(tmpdir(), 'CaseProj');
+	const child = join(tmpdir().toLowerCase(), 'caseproj', 'src', 'App.ts');
+	t.is(isPathInside(child, root), process.platform === 'win32');
+	t.false(isPathInside(join(tmpdir(), 'CaseProj-evil'), root));
+});
+
+test('resolveFilePath: accepts an absolute path spelled in a different case on Windows', (t) => {
+	if (process.platform !== 'win32') {
+		t.pass();
+		return;
+	}
+	const root = mkdtempSync(join(tmpdir(), 'CaseRoot-'));
+	t.teardown(() => rmSync(root, {recursive: true, force: true}));
+	writeFileSync(join(root, 'File.txt'), 'x');
+	const resolved = resolveFilePath(
+		join(root.toLowerCase(), 'File.txt'),
+		root.toUpperCase(),
+	);
+	t.is(resolved.toLowerCase(), join(root, 'File.txt').toLowerCase());
+});
+
 // Test suite for isPathInside / isRealPathInside
 test('isPathInside: accepts the root itself and paths beneath it', t => {
 	t.true(isPathInside('/proj', '/proj'));

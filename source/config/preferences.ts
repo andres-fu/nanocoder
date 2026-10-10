@@ -17,6 +17,7 @@ import type {UserPreferences} from '@/types/index';
 import type {NanocoderShape, ThemePreset} from '@/types/ui';
 import {atomicWriteFileSync} from '@/utils/atomic-write';
 import {logError} from '@/utils/message-queue';
+import {toComparablePath} from '@/utils/path-validation';
 
 let PREFERENCES_PATH: string | null = null;
 let CACHED_CONFIG_DIR: string | undefined = undefined;
@@ -177,9 +178,9 @@ export function isDirectoryTrusted(
 	directory: string,
 	preferences: UserPreferences,
 ): boolean {
-	const resolved = path.resolve(directory); // nosemgrep
+	const resolved = toComparablePath(directory);
 	return (preferences.trustedDirectories ?? []).some(
-		dir => path.resolve(dir) === resolved, // nosemgrep
+		dir => toComparablePath(dir) === resolved,
 	);
 }
 

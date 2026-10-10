@@ -2124,6 +2124,22 @@ test('isDirectoryTrusted does not match an unrelated directory', t => {
 	);
 });
 
+test('isDirectoryTrusted ignores letter case on Windows only', t => {
+	const dir = process.cwd();
+	const prefs = {trustedDirectories: [dir.toUpperCase()]};
+	t.is(
+		isDirectoryTrusted(dir.toLowerCase(), prefs),
+		process.platform === 'win32',
+	);
+});
+
+test('isDirectoryTrusted does not rewrite the stored spelling', t => {
+	const dir = process.cwd();
+	const prefs = {trustedDirectories: [dir.toUpperCase()]};
+	isDirectoryTrusted(dir.toLowerCase(), prefs);
+	t.deepEqual(prefs.trustedDirectories, [dir.toUpperCase()]);
+});
+
 test('ensureDirectoryTrust trusts without persisting when bypass is true', t => {
 	let saveCalled = false;
 	const result = ensureDirectoryTrust('/untrusted/project', true, {

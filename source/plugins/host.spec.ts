@@ -300,6 +300,26 @@ test.serial(
 	},
 );
 
+test.serial(
+	'an editor session treats a differently cased spelling of a trusted directory as trusted on Windows',
+	async t => {
+		const root = withPlugins({'guard.mjs': BLOCK_BASH});
+		const configDir = join(testDir, 'no-global-config');
+		mkdirSync(configDir, {recursive: true});
+		writeFileSync(
+			join(configDir, 'nanocoder-preferences.json'),
+			JSON.stringify({trustedDirectories: [root.toUpperCase()]}),
+			'utf-8',
+		);
+		setProjectRoot(root.toLowerCase());
+
+		await loadTrustedProjectPlugins();
+		const gate = await runPreToolUseGate(bashCall('pwd'), {command: 'pwd'});
+
+		t.is(gate.blocked, process.platform === 'win32');
+	},
+);
+
 test.serial('a .js file is left unloaded', async t => {
 	withPlugins({'guard.js': BLOCK_BASH});
 

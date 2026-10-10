@@ -167,6 +167,17 @@ export function resolveFilePath(
 }
 
 /**
+ * Resolve a path into the form used to compare it with another path. Windows
+ * paths are case-insensitive, so `C:\Work\Proj` and `c:\work\proj` name the same
+ * folder; on win32 the resolved path is lowercased. Use this for comparison
+ * only: keep storing and displaying the user's original spelling.
+ */
+export function toComparablePath(p: string): string {
+	const resolved = path.resolve(p); // nosemgrep
+	return process.platform === 'win32' ? resolved.toLowerCase() : resolved;
+}
+
+/**
  * Lexical containment: is `target` the root itself, or somewhere beneath it?
  *
  * Both arguments are resolved first, so callers may pass relative paths. The
@@ -182,8 +193,8 @@ export function resolveFilePath(
  * path may be attacker- or config-controlled.
  */
 export function isPathInside(target: string, root: string): boolean {
-	const normalizedRoot = path.resolve(root);
-	const normalizedTarget = path.resolve(target);
+	const normalizedRoot = toComparablePath(root);
+	const normalizedTarget = toComparablePath(target);
 	if (normalizedTarget === normalizedRoot) {
 		return true;
 	}

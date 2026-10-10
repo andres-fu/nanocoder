@@ -9,6 +9,7 @@ import type {HookContext, HookOutcome} from '@/services/lifecycle-hooks';
 import {getProjectRoot} from '@/services/session-cwd';
 import type {HookEvent} from '@/types/config';
 import {logError} from '@/utils/message-queue';
+import {toComparablePath} from '@/utils/path-validation';
 
 type PluginEvent = keyof PluginHooks;
 
@@ -58,11 +59,11 @@ export function loadTrustedProjectPlugins(): Promise<void> {
 }
 
 function isProjectTrusted(projectRoot: string): boolean {
-	const root = path.resolve(projectRoot);
+	const root = toComparablePath(projectRoot);
 	let trusted = false;
 	try {
 		const listed = loadPreferences().trustedDirectories ?? [];
-		trusted = listed.some(dir => path.resolve(dir) === root);
+		trusted = listed.some(dir => toComparablePath(dir) === root);
 	} catch (error) {
 		logError(`Could not read directory trust: ${errorMessage(error)}`);
 	}
@@ -78,10 +79,11 @@ export async function withTrustedProjectPlugins<T>(
 	if (!isProjectTrusted(root)) {
 		return pluginScope.run({plugins: [], loading: null}, run);
 	}
-	let state = projectStates.get(root);
+	const key = toComparablePath(root);
+	let state = projectStates.get(key);
 	if (!state) {
 		state = {plugins: [], loading: null};
-		projectStates.set(root, state);
+		projectStates.set(key, state);
 	}
 	state.loading ??= importPlugins(root, state);
 	await state.loading;
